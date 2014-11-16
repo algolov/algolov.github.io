@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Александр Головко]]></title>
+  <link href="http://algolov.github.io/atom.xml" rel="self"/>
+  <link href="http://algolov.github.io/"/>
+  <updated>2014-11-16T14:19:09+10:00</updated>
+  <id>http://algolov.github.io/</id>
+  <author>
+    <name><![CDATA[Golovko Aleksander]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+</feed>

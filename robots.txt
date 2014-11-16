@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+
+Sitemap: http://algolov.github.io/sitemap.xml 
