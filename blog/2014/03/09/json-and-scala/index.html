@@ -1,24 +1,103 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Александр Головко]]></title>
-  <link href="http://algolov.github.io/atom.xml" rel="self"/>
-  <link href="http://algolov.github.io/"/>
-  <updated>2014-11-16T15:08:57+10:00</updated>
-  <id>http://algolov.github.io/</id>
-  <author>
-    <name><![CDATA[Golovko Aleksander]]></name>
-    
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Json and Scala - Александр Головко</title>
+  <meta name="author" content="Golovko Aleksander">
 
   
-  <entry>
-    <title type="html"><![CDATA[Json and Scala]]></title>
-    <link href="http://algolov.github.io/blog/2014/03/09/json-and-scala/"/>
-    <updated>2014-03-09T18:13:48+11:00</updated>
-    <id>http://algolov.github.io/blog/2014/03/09/json-and-scala</id>
-    <content type="html"><![CDATA[<p>В экосистеме Scala довольно много библиотек для работы с json, включая стандартную и исключая java-библиотеки. Данный пост начинает серию статей по использованию различных библиотек для работы с json в Scala. Эта серия статей не претендует на полноценный охват всех возможных библиотек или всех возможностей в библиотеках. Основная цель - понять как работать с json при помощи нескольких популярных библиотек.</p>
+  <meta name="description" content="В экосистеме Scala довольно много библиотек для работы с json, включая стандартную и исключая java-библиотеки. Данный пост начинает серию статей по &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://algolov.github.io/blog/2014/03/09/json-and-scala">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Александр Головко" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+<link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-56791437-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Александр Головко</a></h1>
+  
+    <h2>истории о программировании&#8230;</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:algolov.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Json and Scala</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-09T18:13:48+11:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>6:13 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>В экосистеме Scala довольно много библиотек для работы с json, включая стандартную и исключая java-библиотеки. Данный пост начинает серию статей по использованию различных библиотек для работы с json в Scala. Эта серия статей не претендует на полноценный охват всех возможных библиотек или всех возможностей в библиотеках. Основная цель - понять как работать с json при помощи нескольких популярных библиотек.</p>
 
 <!-- more -->
 
@@ -302,7 +381,144 @@
 <h2>Исходники и запуск</h2>
 
 <p>Исходные тексты можно найти в соответствующем <a href="https://github.com/algolov/JsonSeries.git">репозитории на github</a>. Для запуска необходимо клонировать репозиторий, зайти в директорию JsonSeries и в командной строке выполнить команду <code>sbt test</code>. Для того, что бы запустить только тесты производительности нужно выполнить следующую команду: <code>sbt "test-only *PerfomanceSpec"</code> по этому же принципу можно указать и тесты конкретных библиотек или просмотреть только тесты функциональности. Данные команды загрузят необходимые зависимости, скомпилируют исходные файлы и запустят тесты на выполнение.</p>
-]]></content>
-  </entry>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
   
-</feed>
+
+<span class="byline author vcard">Posted by <span class="fn">Golovko Aleksander</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-09T18:13:48+11:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>6:13 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/argonaut/'>argonaut</a>, <a class='category' href='/blog/categories/json/'>json</a>, <a class='category' href='/blog/categories/play-json/'>play json</a>, <a class='category' href='/blog/categories/scala/'>scala</a>, <a class='category' href='/blog/categories/spray-json/'>spray json</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://algolov.github.io/blog/2014/03/09/json-and-scala/" data-via="" data-counturl="http://algolov.github.io/blog/2014/03/09/json-and-scala/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/03/09/json-and-scala/">Json and Scala</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Golovko Aleksander -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'scalalaz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://algolov.github.io/blog/2014/03/09/json-and-scala/';
+        var disqus_url = 'http://algolov.github.io/blog/2014/03/09/json-and-scala/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
