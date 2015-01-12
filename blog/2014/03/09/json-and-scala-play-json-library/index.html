@@ -1,0 +1,798 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Json и Scala: Play Json Library - Александр Головко</title>
+  <meta name="author" content="Golovko Aleksander">
+
+  
+  <meta name="description" content="Данный пост входит в серию статей на тему работы с JSON в Scala и в нем будет рассмотрена работа с библиотекой Play Json (github, документация). Код &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://algolov.github.io/blog/2014/03/09/json-and-scala-play-json-library">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Александр Головко" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+<link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-56791437-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Александр Головко</a></h1>
+  
+    <h2>истории о программировании&#8230;</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:algolov.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Json и Scala: Play Json Library</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-09T17:13:48+10:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:13 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><img src="/images/json-and-scala/play_json_pic.png" width="350" height="350"></p>
+
+<p>Данный пост входит в <a href="">серию статей</a> на тему работы с JSON в Scala и в нем будет рассмотрена работа с библиотекой Play Json (<a href="https://github.com/playframework/playframework/tree/master/framework/src/play-json">github</a>, <a href="http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.libs.json.package">документация</a>). Код основного примера и каркаса приложения можно <a href="https://github.com/algolov/JsonSeries.git">посмотреть в репозитории на github</a>.</p>
+
+<!-- more -->
+
+
+<p>Данная библиотека была выделена из веб-фреймворка Play, который входит в Typesafe Reactive Platform и для парсинга JSON строк использует java-библиотеку <a href="http://jackson.codehaus.org/">Jackson</a>. Для того, что бы начать работать с библиотекой play json необходимо указать ее в качестве зависимости в вашем файле build.sbt:</p>
+
+<figure class='code'><figcaption><span>build.sbt</span><a href='https://github.com/algolov/JsonSeries/blob/master/build.sbt#L14'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">libraryDependencies</span> <span class="o">++=</span> <span class="nc">Seq</span><span class="o">(</span>
+</span><span class='line'>  <span class="o">...</span>
+</span><span class='line'>  <span class="s">&quot;com.typesafe.play&quot;</span> <span class="o">%%</span> <span class="s">&quot;play-json&quot;</span> <span class="o">%</span> <span class="s">&quot;2.2.1&quot;</span>
+</span><span class='line'>  <span class="o">...</span>
+</span><span class='line'>  <span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>И написать 2 строчки импорта:</p>
+
+<figure class='code'><figcaption><span>PlayJson.scala</span><a href='https://github.com/algolov/JsonSeries/blob/master/src/main/scala/com/github/algolov/libs/PlayJson.scala#L3'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">play.api.libs.json._</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">play.api.libs.functional.syntax._</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Рассматривать возможности данной библиотеки я буду на основе примера описанного в <a href="">заглавном посте</a> серии, с которым необходимо ознакомится для полного понимания сути происходящего.
+Поэтому для начала, рассмотрим то, что предлагает нам библиотека Play Json, а затем как это использовать в рамках нашего примера.</p>
+
+<h2>Play Json: Основные методы</h2>
+
+<p>Для представления типов данных JSON в пакете <code>play.api.libs.json</code> существуют следующие типы данных:</p>
+
+<figure class='code'><figcaption><span>JsValue.scala</span><a href='https://github.com/playframework/playframework/blob/2.2.x/framework/src/play-json/src/main/scala/play/api/libs/json/JsValue.scala#L89'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="cm">/** Represent a Json null value. */</span>
+</span><span class='line'><span class="k">case</span> <span class="k">object</span> <span class="nc">JsNull</span> <span class="k">extends</span> <span class="nc">JsValue</span> <span class="o">{...}</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/** Represent a Json boolean value.*/</span>
+</span><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">JsBoolean</span><span class="o">(</span><span class="n">value</span><span class="k">:</span> <span class="kt">Boolean</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">JsValue</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/** Represent a Json number value. */</span>
+</span><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">JsNumber</span><span class="o">(</span><span class="n">value</span><span class="k">:</span> <span class="kt">BigDecimal</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">JsValue</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/** Represent a Json string value. */</span>
+</span><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">JsString</span><span class="o">(</span><span class="n">value</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">JsValue</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/** Represent a Json array value. */</span>
+</span><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">JsArray</span><span class="o">(</span><span class="n">value</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[</span><span class="kt">JsValue</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">())</span> <span class="k">extends</span> <span class="nc">JsValue</span> <span class="o">{...}</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/** Represent a Json object value.*/</span>
+</span><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">JsObject</span><span class="o">(</span><span class="n">fields</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[(</span><span class="kt">String</span>, <span class="kt">JsValue</span><span class="o">)])</span> <span class="k">extends</span> <span class="nc">JsValue</span> <span class="o">{...}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Как видно из листинга, все эти типы данных расширяют класс <code>JsValue</code>, который является супертипом для всех других JSON типов. Именно этот тип данных кодирует обобщенное понятие JSON, поэтому им мы и конкретизируем абстрактный член типа в трейте <code>JsonLibrary</code>.
+Чтобы реализовать основную функциональность нашего трейта, посмотрим что нам предлагает содержащий статические методы <a href="https://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.libs.json.Json$"><code>объект Json</code></a>:</p>
+
+<figure class='code'><figcaption><span>Json.scala</span><a href='https://github.com/playframework/playframework/blob/2.2.x/framework/src/play-json/src/main/scala/play/api/libs/json/Json.scala#L16'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="cm">/** Parse a String representing a json, and return it as a JsValue. */</span>
+</span><span class='line'> <span class="k">def</span> <span class="n">parse</span><span class="o">(</span><span class="n">input</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">JsValue</span> <span class="o">=</span> <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Итак, для того чтобы разобрать строку представляющую json, необходимо просто передать ее в качестве параметра методу <code>parse</code>, обратно мы получим значение типа <code>JsValue</code>.</p>
+
+<figure class='code'><figcaption><span>Json.scala</span><a href='https://github.com/playframework/playframework/blob/2.2.x/framework/src/play-json/src/main/scala/play/api/libs/json/Json.scala#L48'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="cm">/** Convert a JsValue to its string representation. */</span>
+</span><span class='line'> <span class="k">def</span> <span class="n">stringify</span><span class="o">(</span><span class="n">json</span><span class="k">:</span> <span class="kt">JsValue</span><span class="o">)</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Для того, чтобы конвертировать <code>JsValue</code> обратно в строковое представление, необходимо передать значение этого типа в метод <code>stringify</code>.</p>
+
+<p>С оставшимися двумя методами для сериализации/десериализации все немного сложнее:</p>
+
+<figure class='code'><figcaption><span>Json.scala</span><a href='https://github.com/playframework/playframework/blob/2.2.x/framework/src/play-json/src/main/scala/play/api/libs/json/Json.scala#L83'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="cm">/** Provided a Reads implicit for its type is available, convert any object into a JsValue. */</span>
+</span><span class='line'> <span class="k">def</span> <span class="n">toJson</span><span class="o">[</span><span class="kt">T</span><span class="o">](</span><span class="n">o</span><span class="k">:</span> <span class="kt">T</span><span class="o">)(</span><span class="k">implicit</span> <span class="n">tjs</span><span class="k">:</span> <span class="kt">Writes</span><span class="o">[</span><span class="kt">T</span><span class="o">])</span><span class="k">:</span> <span class="kt">JsValue</span> <span class="o">=</span> <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Для того, что бы конвертировать значение <code>JsValue</code> в класс нашей модели (десериализовать), мы передаем это значение в метод <code>fromJson</code> и на выходе получаем значение типа <code>JsResult[T]</code>, где <code>T</code> это тип модели. Конвертировать значение типа <code>JsValue</code> в другой тип можно так же воспользовавшись методом <code>validate</code> трейта <code>JsValue</code>, который так же возвращает значение типа <code>JsResult[T]</code>:</p>
+
+<figure class='code'><figcaption><span>JsValue.scala</span><a href='https://github.com/playframework/playframework/blob/2.2.x/framework/src/play-json/src/main/scala/play/api/libs/json/JsValue.scala#L70'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="n">validate</span><span class="o">[</span><span class="kt">T</span><span class="o">](</span><span class="k">implicit</span> <span class="n">rds</span><span class="k">:</span> <span class="kt">Reads</span><span class="o">[</span><span class="kt">T</span><span class="o">])</span><span class="k">:</span> <span class="kt">JsResult</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Так что же представляет из себя тип <code>JsResult</code>? <code>JsResult[T]</code> это монадический тип, который может быть либо <code>JsSuccess[T]</code> содержащий результат конвертации, в том случае если конвертация была удачной, либо <code>JsError[T]</code> в обратном случае и содержать список всех ошибок встреченных при конвертировании. И так как это монадический тип, он содержит соответствующие методы (flatMap, map, &hellip;). Вкратце, в случае успешного конвертирования <code>JsResult</code> будет содержать экземпляр класса нашей модели, в обратном случае набор ошибок с указанием на каком этапе конвертирования эти ошибки встретились. Мы еще рассмотрим <code>JsResult</code> более подробно позже, пока же достаточно знать, что мы можем конвертировать значение это типа в значение типа <code>Option[T]</code> при помощи метода <code>asOpt</code>.</p>
+
+<figure class='code'><figcaption><span>Json.scala</span><a href='https://github.com/playframework/playframework/blob/2.2.x/framework/src/play-json/src/main/scala/play/api/libs/json/Json.scala#L90'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="cm">/** Provided a Writes implicit for that type is available, convert a JsValue to any type. */</span>
+</span><span class='line'><span class="k">def</span> <span class="n">fromJson</span><span class="o">[</span><span class="kt">T</span><span class="o">](</span><span class="n">json</span><span class="k">:</span> <span class="kt">JsValue</span><span class="o">)(</span><span class="k">implicit</span> <span class="n">fjs</span><span class="k">:</span> <span class="kt">Reads</span><span class="o">[</span><span class="kt">T</span><span class="o">])</span><span class="k">:</span> <span class="kt">JsResult</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span> <span class="k">=</span> <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Для сериализации класса в JSON передаем экземпляр класса в качестве параметра методу <code>toJson</code> и на выходе получаем значение <code>JsValue</code>.
+Вся загвоздка с методами сериализации/десериализации в том, что у них есть дополнительный неявный список параметров, в котором передаются экземпляры классов <code>Reads[T]</code> и <code>Writes[T]</code> соответственно. Именно эти классы знают как правильно конвертировать типы Scala в <code>JsValue</code> и обратно. В Play json уже содержатся неявные (де)сериализаторы для основных типов данных Scala (<code>DefaultWrites</code> и <code>DefaultReads</code>). Но про то, как конвертировать экземпляры наших классов Play Json ничего не известно. Поэтому мы должны написать соответствующие неявные (де)сериализаторы самостоятельно и обеспечить их присутствие в области видимости там где они потребуются. Прежде чем это сделать, давайте посмотрим на код трейта <code>PlayJson</code> реализующий интерфейс <code>JsonLibrary</code>:</p>
+
+<figure class='code'><figcaption><span>PlayJson.scala</span><a href='https://github.com/algolov/JsonSeries/blob/master/src/main/scala/com/github/algolov/libs/PlayJson.scala#L9'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">trait</span> <span class="nc">PlayJson</span> <span class="k">extends</span> <span class="nc">JsonLibrary</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">import</span> <span class="nn">PlayJson._</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">type</span> <span class="kt">JSON</span> <span class="o">=</span> <span class="nc">JsValue</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">parseFromString</span><span class="o">(</span><span class="n">jsonStr</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">Json</span><span class="o">.</span><span class="n">parse</span><span class="o">(</span><span class="n">jsonStr</span><span class="o">)</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">parseToString</span><span class="o">(</span><span class="n">json</span><span class="k">:</span> <span class="kt">JsValue</span><span class="o">)</span>     <span class="k">=</span> <span class="nc">Json</span><span class="o">.</span><span class="n">stringify</span><span class="o">(</span><span class="n">json</span><span class="o">)</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">serialize</span><span class="o">(</span><span class="n">listing</span><span class="k">:</span> <span class="kt">Listing</span><span class="o">)</span>      <span class="k">=</span> <span class="nc">Json</span><span class="o">.</span><span class="n">toJson</span><span class="o">[</span><span class="kt">Listing</span><span class="o">](</span><span class="n">listing</span><span class="o">)</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">deserialize</span><span class="o">(</span><span class="n">json</span><span class="k">:</span> <span class="kt">JsValue</span><span class="o">)</span>       <span class="k">=</span> <span class="nc">Json</span><span class="o">.</span><span class="n">fromJson</span><span class="o">[</span><span class="kt">Listing</span><span class="o">](</span><span class="n">json</span><span class="o">).</span><span class="n">asOpt</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В этой реализации нет ничего особенного, мы просто используем методы описанные выше. Единственная неоговоренная строка - <code>import PlayJson._</code>. Она производит импорт содержимого объекта-компаньена <code>PlayJson</code>. В нем мы определим все необходимые неявные значения для конвертирования экземпляров наших кейс классов, данным импортом мы вводим их в область видимости, что бы они могли быть подхвачены методами нуждающимися в них. Что же содержит объект <code>PlayJson</code>? На самом деле совсем немного строк кода. Но для того, что бы написать их придется изучить немного теории.</p>
+
+<h2>Play Json: Reads, Writes, Format и JsPath</h2>
+
+<p>Итак мы выяснили, что для того, чтобы конвертировать JsValue в другой тип Scala и обратно нам необходимо предоставить в область видимости соответствующие значения <code>Reads[T]</code> и <code>Writes[T]</code> где <code>T</code> класс модели. Как мы увидим позже, эти конвертеры можно объединить. Но начнем рассматривать все по порядку, а для этого нам нужно познакомиться еще с одним парнем - <code>JsPath</code>.</p>
+
+<h3>JsPath</h3>
+
+<p><a href="http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.libs.json.JsPath">JsPath</a> это набор узлов которые надо обойти в структуре <code>JsValue</code>, чтобы получить значение. Попросту говоря, <code>JsPath</code> представляет собой путь до конкретного значения в json объекте, это практически тоже самое что и <code>XPath</code> для XML. Давайте посмотрим на определение <code>JsPath</code>:</p>
+
+<figure class='code'><figcaption><span>JsPath.scala</span><a href='https://github.com/playframework/playframework/blob/2.2.x/framework/src/play-json/src/main/scala/play/api/libs/json/JsPath.scala#L164'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">JsPath</span><span class="o">(</span><span class="n">path</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">PathNode</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">def</span> <span class="o">\(</span><span class="n">child</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">JsPath</span><span class="o">(</span><span class="n">path</span> <span class="o">:+</span> <span class="nc">KeyPathNode</span><span class="o">(</span><span class="n">child</span><span class="o">))</span>
+</span><span class='line'>  <span class="k">def</span> <span class="o">\(</span><span class="n">child</span><span class="k">:</span> <span class="kt">Symbol</span><span class="o">)</span> <span class="k">=</span> <span class="nc">JsPath</span><span class="o">(</span><span class="n">path</span> <span class="o">:+</span> <span class="nc">KeyPathNode</span><span class="o">(</span><span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="o">\\(</span><span class="n">child</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">JsPath</span><span class="o">(</span><span class="n">path</span> <span class="o">:+</span> <span class="nc">RecursiveSearch</span><span class="o">(</span><span class="n">child</span><span class="o">))</span>
+</span><span class='line'>  <span class="k">def</span> <span class="o">\\(</span><span class="n">child</span><span class="k">:</span> <span class="kt">Symbol</span><span class="o">)</span> <span class="k">=</span> <span class="nc">JsPath</span><span class="o">(</span><span class="n">path</span> <span class="o">:+</span> <span class="nc">RecursiveSearch</span><span class="o">(</span><span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">idx</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">JsPath</span> <span class="o">=</span> <span class="nc">JsPath</span><span class="o">(</span><span class="n">path</span> <span class="o">:+</span> <span class="nc">IdxPathNode</span><span class="o">(</span><span class="n">idx</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">json</span><span class="k">:</span> <span class="kt">JsValue</span><span class="o">)</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">JsValue</span><span class="o">]</span> <span class="k">=</span> <span class="n">path</span><span class="o">.</span><span class="n">foldLeft</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="n">json</span><span class="o">))((</span><span class="n">s</span><span class="o">,</span> <span class="n">p</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">flatMap</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="n">apply</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Как видно из листинга <code>JsPath</code> это список узлов пути <code>List[PathNode]</code> и набор операций над этим списком. Методы <code>\</code> и <code>\\</code> имеют две версии. Это нужно для того, что бы можно было сформировать путь используя как строки (<code>JsPath \ "key1"</code>), так и символы (<code>JsPath \ 'key1</code>). Оба этих метода и первый метод <code>apply</code> формируют новый путь добавляя узлы соответствующих типов (они все расширяют <code>PathNode</code>) к исходному пути. Вторая версия <code>apply</code> применяет значение типа <code>JsValue</code> к сформированному пути, т.е. берем первый узел в пути и из переданного json-значения выбираем все дочерние ключи соответствующие этому узлу. Получается список значений <code>JsValue</code> (отобранные ключи). Затем берется следующий узел и из полученного списка выбирается все дочерние ключи, соответствующие новому узлу и так далее. Когда узлы в пути закончатся, то итоговый список значений <code>JsValue</code> как раз и будет результатом. Давайте посмотрим на примере и сформируем такой путь:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">path</span> <span class="k">=</span> <span class="nc">JsPath</span> <span class="o">\</span> <span class="s">&quot;key1&quot;</span> <span class="o">\</span> <span class="s">&quot;key2&quot;</span>
+</span><span class='line'><span class="n">path</span><span class="k">:</span> <span class="kt">play.api.libs.json.JsPath</span> <span class="o">=</span> <span class="o">/</span><span class="n">key1</span><span class="o">/</span><span class="n">key2</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>А теперь попробуем применить к этому пути различные json объекты:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">json1</span> <span class="k">=</span> <span class="nc">Json</span><span class="o">.</span><span class="n">obj</span><span class="o">(</span><span class="s">&quot;key1&quot;</span> <span class="o">-&gt;</span> <span class="nc">Json</span><span class="o">.</span><span class="n">obj</span><span class="o">(</span><span class="s">&quot;key2&quot;</span> <span class="o">-&gt;</span> <span class="s">&quot;value&quot;</span><span class="o">))</span>
+</span><span class='line'><span class="n">json1</span><span class="k">:</span> <span class="kt">play.api.libs.json.JsObject</span> <span class="o">=</span> <span class="o">{</span><span class="s">&quot;key1&quot;</span><span class="k">:</span><span class="o">{</span><span class="err">&quot;</span><span class="kt">key2</span><span class="err">&quot;</span><span class="kt">:</span><span class="err">&quot;</span><span class="kt">value</span><span class="err">&quot;</span><span class="o">}}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">json2</span> <span class="k">=</span> <span class="nc">Json</span><span class="o">.</span><span class="n">obj</span><span class="o">(</span><span class="s">&quot;key1&quot;</span> <span class="o">-&gt;</span> <span class="nc">Json</span><span class="o">.</span><span class="n">obj</span><span class="o">(</span><span class="s">&quot;key2&quot;</span> <span class="o">-&gt;</span> <span class="nc">Json</span><span class="o">.</span><span class="n">arr</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span><span class="mi">2</span><span class="o">,</span><span class="mi">3</span><span class="o">,</span><span class="mi">4</span><span class="o">,</span><span class="mi">5</span><span class="o">)))</span>
+</span><span class='line'><span class="n">json2</span><span class="k">:</span> <span class="kt">play.api.libs.json.JsObject</span> <span class="o">=</span> <span class="o">{</span><span class="s">&quot;key1&quot;</span><span class="k">:</span><span class="o">{</span><span class="err">&quot;</span><span class="kt">key2</span><span class="err">&quot;</span><span class="kt">:</span><span class="o">[</span><span class="err">1</span>,<span class="err">2</span>,<span class="err">3</span>,<span class="err">4</span>,<span class="err">5</span><span class="o">]}}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="n">path</span><span class="o">(</span><span class="n">json1</span><span class="o">)</span>
+</span><span class='line'><span class="n">res0</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">play.api.libs.json.JsValue</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="s">&quot;value&quot;</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="n">path</span><span class="o">(</span><span class="n">json2</span><span class="o">)</span>
+</span><span class='line'><span class="n">res1</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">play.api.libs.json.JsValue</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">([</span><span class="err">1</span>,<span class="err">2</span>,<span class="err">3</span>,<span class="err">4</span>,<span class="err">5</span><span class="o">])</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="n">path</span><span class="o">(</span><span class="mi">2</span><span class="o">)(</span><span class="n">json2</span><span class="o">)</span>
+</span><span class='line'><span class="n">res6</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">play.api.libs.json.JsValue</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="mi">3</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Итак, для того что бы сформировать путь, нам надо начать с объекта <code>JsPath</code>, который представляет корневой элемент пути и продолжить добавляя к нему соответствующие узлы, при помощи описанных выше методов. Для большего удобства и лучшего визуального выделения в объекте пакета json для объекта <code>JsPath</code> определен алиас: <code>__</code> так что путь из предыдущего примера можно переписать так:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">path</span> <span class="k">=</span> <span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;key1&quot;</span> <span class="o">\</span> <span class="s">&quot;key2&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Теперь, когда мы научились формировать путь, можно перейти к написанию непосредственно конвертеров.
+Reads</p>
+
+<p>Конвертеры <code>Reads[T]</code> используются для десериализации из <code>JsValue</code> в какой-нибудь другой тип <code>T</code>, например в класс модели <code>Listing</code>. <code>Reads[T]</code> можно комбинировать и вкладывать друг в друга, что бы получить более сложные конвертеры <code>Reads[T]</code>. Например для того, что бы получить десериализатор кейс класса <code>Counters</code>, нам необходимо объединить четыре десериализатора из <code>JsValue</code> в Int. А для того, что бы написать десериализатор для класса Link нам придется вложить десериализатор класса <code>Counters</code>. Давайте, напишем десериализатор для класса <code>Counters</code>. Так как все поля этого класса имеют стандартный тип Scala, это будет довольно просто и библиотека Play Json предлагает несколько способов сделать задуманное. Во первых, мы можем воспользоваться <code>JsPath</code> и его методами <code>read</code> и <code>readNullable</code>:</p>
+
+<figure class='code'><figcaption><span>JsPath.scala</span><a href='https://github.com/playframework/playframework/blob/2.2.x/framework/src/play-json/src/main/scala/play/api/libs/json/JsPath.scala#L256'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="n">read</span><span class="o">[</span><span class="kt">T</span><span class="o">](</span><span class="k">implicit</span> <span class="n">r</span><span class="k">:</span> <span class="kt">Reads</span><span class="o">[</span><span class="kt">T</span><span class="o">])</span><span class="k">:</span> <span class="kt">Reads</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span>
+</span><span class='line'><span class="k">def</span> <span class="n">readNullable</span><span class="o">[</span><span class="kt">T</span><span class="o">](</span><span class="k">implicit</span> <span class="n">r</span><span class="k">:</span> <span class="kt">Reads</span><span class="o">[</span><span class="kt">T</span><span class="o">])</span><span class="k">:</span> <span class="kt">Reads</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">T</span><span class="o">]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Данные методы принимают в качестве параметра неявный конвертер типа <code>Reads[T]</code> и применяют его к значению извлеченному по указанному пути. Метод <code>readNullable</code> полезен в случае если значение по указанному пути равно <code>null</code> или не найдено, в таком случае он вернет <code>None</code>. Например следующий код:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">score</span> <span class="k">=</span> <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;before&quot;</span><span class="o">).</span><span class="n">readNullable</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+</span><span class='line'><span class="n">score</span><span class="k">:</span> <span class="kt">play.api.libs.json.Reads</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">String</span><span class="o">]]</span> <span class="k">=</span> <span class="n">play</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">libs</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="nc">Reads$$anon$8</span><span class="k">@</span><span class="mi">707</span><span class="n">d7290</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Применит к значению ключа before неявный конвертер в тип String, который предоставляется Play Json:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">jStr</span> <span class="k">=</span> <span class="nc">Source</span><span class="o">.</span><span class="n">fromURL</span><span class="o">(</span><span class="n">getClass</span><span class="o">.</span><span class="n">getResource</span><span class="o">(</span><span class="s">&quot;/reddit.json&quot;</span><span class="o">)).</span><span class="n">getLines</span><span class="o">().</span><span class="n">mkString</span>
+</span><span class='line'><span class="n">jStr</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="o">...</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">json</span> <span class="k">=</span> <span class="nc">Json</span><span class="o">.</span><span class="n">parse</span><span class="o">(</span><span class="n">jStr</span><span class="o">)</span>
+</span><span class='line'><span class="n">json</span><span class="k">:</span> <span class="kt">play.api.libs.json.JsValue</span> <span class="o">=</span> <span class="o">...</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="nc">Json</span><span class="o">.</span><span class="n">fromJson</span><span class="o">(</span><span class="n">json</span><span class="o">)(</span><span class="n">score</span><span class="o">)</span>
+</span><span class='line'><span class="n">res8</span><span class="k">:</span> <span class="kt">play.api.libs.json.JsResult</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">String</span><span class="o">]]</span> <span class="k">=</span> <span class="nc">JsSuccess</span><span class="o">(</span><span class="nc">Some</span><span class="o">(</span><span class="n">t3_1ygz6x</span><span class="o">),/</span><span class="n">data</span><span class="o">/</span><span class="n">before</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Итак, мы можем извлекать и конвертировать отдельные значения. Для того, что бы преобразовать эти отдельные значения в более сложный тип, например класс <code>Counters</code> необходимо скомбинировать конвертеры при помощи операции <code>and</code> или <code>~</code> (по сути <code>and</code> просто вызывает <code>~</code>):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">:</span><span class="kt">paste</span>
+</span><span class='line'><span class="k">val</span> <span class="n">countersCombReads</span> <span class="k">=</span>
+</span><span class='line'><span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="-Symbol">&#39;ups</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'><span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="-Symbol">&#39;downs</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'><span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="-Symbol">&#39;score</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'><span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="-Symbol">&#39;num_comments</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Exiting paste mode, now interpreting.</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">countersCombReads</span><span class="k">:</span> <span class="kt">FunctionalBuilder</span><span class="o">[</span><span class="kt">Reads</span><span class="o">]</span><span class="k">#</span><span class="nc">CanBuild4</span><span class="o">[</span><span class="kt">Int</span>,<span class="kt">Int</span>,<span class="kt">Int</span>,<span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Как видно из листинга результатом такого комбинирования является экземпляр класса <code>FunctionalBuilder[Reads]#CanBuild4[Int,Int,Int,Int]</code>, не будем останавливаться на нем подробно. Можно воспринимать этот результат как промежуточный при построении более сложных конвертеров <code>Reads</code>. Главное знать, что таких типов <code>FunctionalBuilder[Reads]#CanBuildX</code> существует вплоть до X=22, то есть мы можем скомбинировать до 22 конвертеров <code>Reads</code> (известное ограничение в Scala) и если значению такого типа передать в его метод apply функцию формирования из отдельных значений экземпляр модели (метод <code>apply</code> у кейс класса), то мы получим составной конвертер для нашей модели:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">contersReads</span> <span class="k">=</span> <span class="n">countersCombReads</span><span class="o">.</span><span class="n">apply</span><span class="o">(</span><span class="nc">Counters</span><span class="o">.</span><span class="n">apply</span> <span class="k">_</span><span class="o">)</span>
+</span><span class='line'><span class="n">contersReads</span><span class="k">:</span> <span class="kt">Reads</span><span class="o">[</span><span class="kt">Counters</span><span class="o">]</span> <span class="k">=</span> <span class="n">play</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">libs</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="nc">Reads$$anon$8</span><span class="k">@</span><span class="mi">6</span><span class="n">e266f8f</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Более кратко все это можно записать следующим образом:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">implicit</span> <span class="k">val</span> <span class="n">countersReads</span> <span class="k">=</span> <span class="o">(</span>
+</span><span class='line'>     <span class="o">|</span> <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="-Symbol">&#39;ups</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>     <span class="o">|</span> <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="-Symbol">&#39;downs</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>     <span class="o">|</span> <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="-Symbol">&#39;score</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>     <span class="o">|</span> <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="-Symbol">&#39;num_comments</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span> <span class="o">(</span><span class="nc">Counters</span><span class="o">.</span><span class="n">apply</span> <span class="k">_</span><span class="o">)</span>
+</span><span class='line'><span class="n">countersReads</span><span class="k">:</span> <span class="kt">play.api.libs.json.Reads</span><span class="o">[</span><span class="kt">Counters</span><span class="o">]</span> <span class="k">=</span> <span class="n">play</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">libs</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="nc">Reads$$anon$8</span><span class="k">@</span><span class="mi">39</span><span class="n">e24635</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Понимая принцип создания сложных конвертеров из комбинации простых, последний листинг выглядит довольно простым. Однако библиотека Play Json предоставляет еще более простой способ. Создать десериализатор для вашей модели можно так же при помощи удобного метода reads объекта Json. Данный метод использует макросы введенные в Scala 2.10:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="nc">Json</span><span class="o">.</span><span class="n">reads</span><span class="o">[</span><span class="kt">Counters</span><span class="o">]</span>
+</span><span class='line'><span class="n">res25</span><span class="k">:</span> <span class="kt">play.api.libs.json.Reads</span><span class="o">[</span><span class="kt">Test.Counters</span><span class="o">]</span> <span class="k">=</span> <span class="n">play</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">libs</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="nc">Reads$$anon$8</span><span class="k">@</span><span class="mi">26</span><span class="n">fbe9c1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Вот и все. Одна строка. Но у этого метода есть ряд ограничений:
+- нельзя перегружать метод <code>apply</code> у кейс класса в объекте компаньене, потому что макрос не сможет выбрать между несколькими методами <code>apply</code>
+- функции <code>apply</code> (и <code>unaply</code> в случае <code>write</code>) должны иметь соответствующие входные/выходные типы. У кейс классов это предоставляется автоматически, а для трейтов необходимо будет написать соответствующие методы <code>apply</code> и <code>unaply</code>. Обратите внимание как обрабатывается модель <code>Listing</code>, ниже
+- Json макрос умеет обрабатывать следующие обобщенные типы <code>Option</code>, <code>Seq</code>, <code>List</code>, <code>Set</code> и <code>Map[String, _]</code>. В случае остальных придется отказаться от использования макросов.</p>
+
+<p>Наименование полей данных в модели должно соответствовать наименованиям полей в json объекте.
+Давайте теперь напишем десериализаторы для остальных моделей, начнем с модели для ссылок:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">implicit</span> <span class="k">val</span> <span class="n">linkReads</span><span class="k">:</span> <span class="kt">Reads</span><span class="o">[</span><span class="kt">Link</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;title&quot;</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;url&quot;</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">String</span><span class="o">].</span><span class="n">map</span><span class="o">[</span><span class="kt">URL</span><span class="o">](</span><span class="k">new</span> <span class="nc">URL</span><span class="o">(</span><span class="k">_</span><span class="o">))</span> <span class="o">~</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Counters</span><span class="o">]</span>
+</span><span class='line'><span class="o">)(</span><span class="nc">Link</span><span class="o">.</span><span class="n">apply</span> <span class="k">_</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Для поля <code>title</code> мы воспользовались неявным конвертером предоставляемым библиотекой. А для конвертирования поля <code>url</code>, я воспользовался удобным методом map и преобразовал конвертер строки в конвертер класса <code>URL</code>. Поля содержащиеся в классе <code>Counters</code>, иерархически находятся на одном уровне с полями <code>title</code> и <code>url</code>, поэтому конвертеру мы указываем просто путь <code>(__ \ "data")</code>, и так как ранее мы уже написали неявный конвертер для типа <code>Counters</code> никаких преобразований больше не требуется. Хотя, отдельный неявный конвертер для <code>Counters</code> можно было и не писать, а просто передать явно в качестве параметра:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'>   <span class="o">...</span>
+</span><span class='line'><span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Counters</span><span class="o">](</span><span class="nc">Json</span><span class="o">.</span><span class="n">reads</span><span class="o">[</span><span class="kt">Counters</span><span class="o">])</span>
+</span><span class='line'>   <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Теперь настала очередь десериализатора для последней модели:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">implicit</span> <span class="k">val</span> <span class="n">listingFormat</span><span class="k">:</span> <span class="kt">Reads</span><span class="o">[</span><span class="kt">Listing</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;children&quot;</span><span class="o">).</span><span class="n">read</span><span class="o">[</span><span class="kt">Seq</span><span class="o">[</span><span class="kt">Link</span><span class="o">]]</span> <span class="o">~</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;before&quot;</span><span class="o">).</span><span class="n">readNullable</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;after&quot;</span><span class="o">).</span><span class="n">readNullable</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+</span><span class='line'>  <span class="o">)(</span><span class="nc">Listing</span><span class="o">(</span><span class="nc">UUID</span><span class="o">.</span><span class="n">randomUUID</span><span class="o">(),</span> <span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Здесь стоит отметить два момента. Во-первых, конвертер для поля <code>children</code>. Так как значением этого поля является массив объектов, соответствующих модели <code>Link</code> в нашем представлении, мы конвертируем его в коллекцию ссылок <code>Seq[Link]</code>. Это работает так как в play json уже есть неявный сериализатор для коллекций. Во-вторых, это способ формирования экземпляра нашей модели. Из-за того, что модель <code>Listing</code> имеет поле <code>id</code>, которое отсутствует в json, но должно быть задано при создании экземпляра, мы не можем использовать функцию <code>apply</code> модели. Вместо этого мы передаем лямбда выражение, формирующее функцию принимающую три параметра и возвращаю экземпляр класса <code>Lisitng</code>. Более развернуто это можно записать следующим образом:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="o">(</span><span class="n">links</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[</span><span class="kt">Link</span><span class="o">],</span> <span class="n">before</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">String</span><span class="o">],</span> <span class="n">after</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span> <span class="k">=&gt;</span> <span class="nc">Listing</span><span class="o">(</span><span class="nc">UUID</span><span class="o">.</span><span class="n">randomUUID</span><span class="o">(),</span> <span class="n">links</span><span class="o">,</span> <span class="n">before</span><span class="o">,</span> <span class="n">after</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Итак, с десериализаторами мы закончили переходим к написанию сериализаторов.</p>
+
+<h3>Writes</h3>
+
+<p>С сериализаторами все будет немного проще. Дело в том, что реализация сериализатора практически не отличается от десериализатора. Начнем с модели <code>Counters</code>. Когда мы писали для нее десериализатор, то в конце концов воспользовались методом <code>reads[T]</code> объекта Json, основанным на макросах. Как вы наверно догадались, существует такой же метод и для сериализатора:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="nc">Json</span><span class="o">.</span><span class="n">writes</span><span class="o">[</span><span class="kt">Counters</span><span class="o">]</span>
+</span><span class='line'><span class="n">res10</span><span class="k">:</span> <span class="kt">play.api.libs.json.OWrites</span><span class="o">[</span><span class="kt">Counters</span><span class="o">]</span> <span class="k">=</span> <span class="n">play</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">libs</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="nc">OWrites$$anon$2</span><span class="k">@</span><span class="mi">65</span><span class="n">b117cd</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Не будем реализовывать его в качестве отдельного неявного значения, а просто передадим его в качестве параметра при реализации сериализатора для модели <code>Link</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">implicit</span> <span class="k">val</span> <span class="n">linkWrites</span><span class="k">:</span> <span class="kt">Writes</span><span class="o">[</span><span class="kt">Link</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;title&quot;</span><span class="o">).</span><span class="n">write</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;url&quot;</span><span class="o">).</span><span class="n">write</span><span class="o">[</span><span class="kt">URL</span><span class="o">](</span><span class="k">new</span> <span class="nc">Writes</span><span class="o">[</span><span class="kt">URL</span><span class="o">]{</span> <span class="k">def</span> <span class="n">writes</span><span class="o">(</span><span class="n">o</span><span class="k">:</span> <span class="kt">URL</span><span class="o">)</span> <span class="k">=</span> <span class="nc">JsString</span><span class="o">(</span><span class="n">o</span><span class="o">.</span><span class="n">toString</span><span class="o">)</span> <span class="o">})</span> <span class="o">~</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span><span class="o">).</span><span class="n">write</span><span class="o">[</span><span class="kt">Counters</span><span class="o">](</span><span class="nc">Json</span><span class="o">.</span><span class="n">writes</span><span class="o">[</span><span class="kt">Counters</span><span class="o">])</span>
+</span><span class='line'><span class="o">)(</span><span class="n">unlift</span><span class="o">(</span><span class="nc">Link</span><span class="o">.</span><span class="n">unapply</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Итак, перечислим основные отличия. Для поля url мы создаем новый конвертер <code>Writes[URL]</code> и реализуем логику конвертирования в методе writes, так как к экземпляру класса <code>Write[T]</code> метод map не применим. Для того, что бы сформировать из экземпляра нашей модели, несколько значений (те члены класса которые необходимо сериализовать), мы используем функцию unapply, но так как результат этой функции будет <code>Option[(String, URL, Counters)]</code> вместо (<code>String</code>, <code>URL</code>, <code>Counters</code>) мы трансформируем ее при помощи функции <code>unlift</code>.
+И в заключении сериализатор для модели <code>Listing</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">implicit</span> <span class="k">val</span> <span class="n">listingWrites</span><span class="k">:</span> <span class="kt">Writes</span><span class="o">[</span><span class="kt">Listing</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;children&quot;</span><span class="o">).</span><span class="n">write</span><span class="o">[</span><span class="kt">Seq</span><span class="o">[</span><span class="kt">Link</span><span class="o">]]</span> <span class="o">~</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;before&quot;</span><span class="o">).</span><span class="n">writeNullable</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>  <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;after&quot;</span><span class="o">).</span><span class="n">writeNullable</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+</span><span class='line'><span class="o">)(</span><span class="n">l</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">l</span><span class="o">.</span><span class="n">data</span><span class="o">,</span> <span class="n">l</span><span class="o">.</span><span class="n">before</span><span class="o">,</span> <span class="n">l</span><span class="o">.</span><span class="n">after</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Единственное отличие здесь это то, что вместо метода <code>unapply</code> мы передаем лямбду возвращающую только три поля и игнорирующую поле <code>id</code>, которое не требует сериализации.
+И вот наконец-то мы разобрались с сериализаторами и десериализаторами и казалось бы на этом можно ставить точку. Однако Play Json предоставляет возможность объединить написание сериализатора и десериализатора в одном классе.</p>
+
+<h3>Format</h3>
+
+<p><code>Format[T]</code> это просто смесь из конвертеров <code>Reads[T]</code> и <code>Writes[T]</code>. Для того, что бы создать <code>Format[T]</code> можно воспользоваться, например, методом на основе макросов:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="nc">Json</span><span class="o">.</span><span class="n">format</span><span class="o">[</span><span class="kt">Counters</span><span class="o">]</span>
+</span><span class='line'><span class="n">res0</span><span class="k">:</span> <span class="kt">play.api.libs.json.OFormat</span><span class="o">[</span><span class="kt">Counters</span><span class="o">]</span> <span class="k">=</span> <span class="n">play</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">libs</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="nc">OFormat$$anon$1</span><span class="k">@</span><span class="mi">4</span><span class="n">c34c60e</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Или можно воспользоваться уже имеющимися конверторами Reads и Writes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">linkFormat</span><span class="k">:</span> <span class="kt">Format</span><span class="o">[</span><span class="kt">Link</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Format</span><span class="o">(</span><span class="n">linkReads</span><span class="o">,</span> <span class="n">linkWrites</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Также можно написать конвертеры с нуля, воспользовавшись комбинаторами:</p>
+
+<figure class='code'><figcaption><span>PlayJson.scala</span><a href='https://github.com/algolov/JsonSeries/blob/master/src/main/scala/com/github/algolov/libs/PlayJson.scala#L22'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">implicit</span> <span class="k">val</span> <span class="n">linkFormat</span><span class="k">:</span> <span class="kt">Format</span><span class="o">[</span><span class="kt">Link</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;title&quot;</span><span class="o">).</span><span class="n">format</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;url&quot;</span><span class="o">).</span><span class="n">format</span><span class="o">[</span><span class="kt">String</span><span class="o">].</span><span class="n">inmap</span><span class="o">[</span><span class="kt">URL</span><span class="o">](</span><span class="k">new</span> <span class="nc">URL</span><span class="o">(</span><span class="k">_</span><span class="o">),</span> <span class="k">_</span><span class="o">.</span><span class="n">toString</span><span class="o">)</span> <span class="o">~</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span><span class="o">).</span><span class="n">format</span><span class="o">[</span><span class="kt">Counters</span><span class="o">](</span><span class="nc">Json</span><span class="o">.</span><span class="n">format</span><span class="o">[</span><span class="kt">Counters</span><span class="o">])</span>
+</span><span class='line'>  <span class="o">)(</span><span class="nc">Link</span><span class="o">.</span><span class="n">apply</span><span class="o">,</span> <span class="n">unlift</span><span class="o">(</span><span class="nc">Link</span><span class="o">.</span><span class="n">unapply</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Для поля <code>title</code> используется конвертер по умолчанию. Для поля <code>url</code> мы преобразовываем стандартный конвертер <code>Format[String]</code> в конвертер <code>Format[URL]</code> воспользовавшись методом <code>inmap</code> и передав в него функции для создания <code>URL</code> из строки и обратно. И так как <code>Format[Link]</code> объединяет в себе сериализатор и десериализатор, результатом объединения путей будет тип <code>FunctionalBuilder[OFormat]#CanBuild3[String,URL,Counters]</code>, в функцию apply которого необходимо передать две функции для построения объекта модели из отдельных значений его полей и обратно. В создании <code>Format[Listing]</code> тоже нет ничего неожиданного:</p>
+
+<figure class='code'><figcaption><span>PlayJson.scala</span><a href='https://github.com/algolov/JsonSeries/blob/master/src/main/scala/com/github/algolov/libs/PlayJson.scala#L28'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">implicit</span> <span class="k">val</span> <span class="n">listingFormat</span><span class="k">:</span> <span class="kt">Format</span><span class="o">[</span><span class="kt">Listing</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;children&quot;</span><span class="o">).</span><span class="n">format</span><span class="o">[</span><span class="kt">Seq</span><span class="o">[</span><span class="kt">Link</span><span class="o">]]</span> <span class="o">~</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;before&quot;</span><span class="o">).</span><span class="n">formatNullable</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;after&quot;</span><span class="o">).</span><span class="n">formatNullable</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+</span><span class='line'>    <span class="o">)(</span><span class="nc">Listing</span><span class="o">(</span><span class="nc">UUID</span><span class="o">.</span><span class="n">randomUUID</span><span class="o">(),</span> <span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">),</span> <span class="n">l</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">l</span><span class="o">.</span><span class="n">data</span><span class="o">,</span> <span class="n">l</span><span class="o">.</span><span class="n">before</span><span class="o">,</span> <span class="n">l</span><span class="o">.</span><span class="n">after</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Итак, разобравшись с теорией, вернемся к объекту PlayJson нашего приложения. Вот его реализация:</p>
+
+<figure class='code'><figcaption><span>PlayJson.scala</span><a href='https://github.com/algolov/JsonSeries/blob/master/src/main/scala/com/github/algolov/libs/PlayJson.scala#L20'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">object</span> <span class="nc">PlayJson</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">implicit</span> <span class="k">val</span> <span class="n">linkFormat</span><span class="k">:</span> <span class="kt">Format</span><span class="o">[</span><span class="kt">Link</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;title&quot;</span><span class="o">).</span><span class="n">format</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;url&quot;</span><span class="o">).</span><span class="n">format</span><span class="o">[</span><span class="kt">String</span><span class="o">].</span><span class="n">inmap</span><span class="o">[</span><span class="kt">URL</span><span class="o">](</span><span class="k">new</span> <span class="nc">URL</span><span class="o">(</span><span class="k">_</span><span class="o">),</span> <span class="k">_</span><span class="o">.</span><span class="n">toString</span><span class="o">)</span> <span class="o">~</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span><span class="o">).</span><span class="n">format</span><span class="o">[</span><span class="kt">Counters</span><span class="o">](</span><span class="nc">Json</span><span class="o">.</span><span class="n">format</span><span class="o">[</span><span class="kt">Counters</span><span class="o">])</span>
+</span><span class='line'>  <span class="o">)(</span><span class="nc">Link</span><span class="o">.</span><span class="n">apply</span><span class="o">,</span> <span class="n">unlift</span><span class="o">(</span><span class="nc">Link</span><span class="o">.</span><span class="n">unapply</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">implicit</span> <span class="k">val</span> <span class="n">listingFormat</span><span class="k">:</span> <span class="kt">Format</span><span class="o">[</span><span class="kt">Listing</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;children&quot;</span><span class="o">).</span><span class="n">format</span><span class="o">[</span><span class="kt">Seq</span><span class="o">[</span><span class="kt">Link</span><span class="o">]]</span> <span class="o">~</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;before&quot;</span><span class="o">).</span><span class="n">formatNullable</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="o">~</span>
+</span><span class='line'>    <span class="o">(</span><span class="nc">__</span> <span class="o">\</span> <span class="s">&quot;data&quot;</span> <span class="o">\</span> <span class="s">&quot;after&quot;</span><span class="o">).</span><span class="n">formatNullable</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+</span><span class='line'>    <span class="o">)(</span><span class="nc">Listing</span><span class="o">(</span><span class="nc">UUID</span><span class="o">.</span><span class="n">randomUUID</span><span class="o">(),</span> <span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">),</span> <span class="n">l</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">l</span><span class="o">.</span><span class="n">data</span><span class="o">,</span> <span class="n">l</span><span class="o">.</span><span class="n">before</span><span class="o">,</span> <span class="n">l</span><span class="o">.</span><span class="n">after</span><span class="o">))</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Обратите внимание на порядок объявления неявных значений. Так как <code>linkFormat</code> используется при создании <code>listingFormat</code>, в таком виде он обязательно должен предшествовать созданию <code>listingFormat</code>. Иначе, при выполнении тестов, вы получите не очень информативное исключение времени исполнения - <code>java.lang.NullPointerException</code></p>
+
+<h3>Тесты</h3>
+
+<p>После того как мы разобрались как сериализовывать/десериализовывать данные при помощи библиотеки Play Json. Давайте реализуем и запустим тесты. Для этого просто создадим две спецификации, расширив соответствующие спецификации для тестов функциональности и тестов производительности:</p>
+
+<figure class='code'><figcaption><span>PlayJsonFunctionalitySpec.scala</span><a href='https://github.com/algolov/JsonSeries/blob/master/src/test/scala/com/github/algolov/libs/PlayJsonFunctionalitySpec.scala#L3'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">class</span> <span class="nc">PlayJsonFunctionalitySpec</span> <span class="k">extends</span> <span class="nc">JsonLibraryFunctionalitySpec</span> <span class="k">with</span> <span class="nc">PlayJson</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">name</span> <span class="k">=</span> <span class="s">&quot;Play Json&quot;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>и</p>
+
+<figure class='code'><figcaption><span>PlayJsonPerfomanceSpec.scala</span><a href='https://github.com/algolov/JsonSeries/blob/master/src/test/scala/com/github/algolov/libs/PlayJsonPerfomanceSpec.scala'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">class</span> <span class="nc">PlayJsonPerfomanceSpec</span> <span class="k">extends</span> <span class="nc">JsonLibraryPerfomanceSpec</span> <span class="k">with</span> <span class="nc">PlayJson</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">name</span> <span class="k">=</span> <span class="s">&quot;Play Json&quot;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Запустим и посмотрим на результаты:</p>
+
+<p><img src="/images/json-and-scala/play_json_tests.png"></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Golovko Aleksander</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-09T17:13:48+10:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:13 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/json/'>json</a>, <a class='category' href='/blog/categories/play-json/'>play json</a>, <a class='category' href='/blog/categories/scala/'>scala</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://algolov.github.io/blog/2014/03/09/json-and-scala-play-json-library/" data-via="" data-counturl="http://algolov.github.io/blog/2014/03/09/json-and-scala-play-json-library/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/09/json-and-scala/" title="Previous Post: Json и Scala">&laquo; Json и Scala</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/11/20/polimorphism-in-scala/" title="Next Post: Заметки о полиморфизме в Scala">Заметки о полиморфизме в Scala &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/11/20/polimorphism-in-scala/">Заметки о полиморфизме в Scala</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/09/json-and-scala-play-json-library/">Json и Scala: Play Json Library</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/09/json-and-scala/">Json и Scala</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Golovko Aleksander -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'scalalaz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://algolov.github.io/blog/2014/03/09/json-and-scala-play-json-library/';
+        var disqus_url = 'http://algolov.github.io/blog/2014/03/09/json-and-scala-play-json-library/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

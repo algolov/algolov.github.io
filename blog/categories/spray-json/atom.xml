@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Spray Json | Александр Головко]]></title>
   <link href="http://algolov.github.io/blog/categories/spray-json/atom.xml" rel="self"/>
   <link href="http://algolov.github.io/"/>
-  <updated>2014-11-16T15:08:57+10:00</updated>
+  <updated>2015-01-13T01:21:47+10:00</updated>
   <id>http://algolov.github.io/</id>
   <author>
     <name><![CDATA[Golovko Aleksander]]></name>
@@ -14,9 +14,9 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Json and Scala]]></title>
+    <title type="html"><![CDATA[Json и Scala]]></title>
     <link href="http://algolov.github.io/blog/2014/03/09/json-and-scala/"/>
-    <updated>2014-03-09T18:13:48+11:00</updated>
+    <updated>2014-03-09T17:13:48+10:00</updated>
     <id>http://algolov.github.io/blog/2014/03/09/json-and-scala</id>
     <content type="html"><![CDATA[<p>В экосистеме Scala довольно много библиотек для работы с json, включая стандартную и исключая java-библиотеки. Данный пост начинает серию статей по использованию различных библиотек для работы с json в Scala. Эта серия статей не претендует на полноценный охват всех возможных библиотек или всех возможностей в библиотеках. Основная цель - понять как работать с json при помощи нескольких популярных библиотек.</p>
 

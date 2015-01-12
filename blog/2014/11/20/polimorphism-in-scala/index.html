@@ -1,0 +1,796 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Заметки о полиморфизме в Scala - Александр Головко</title>
+  <meta name="author" content="Golovko Aleksander">
+
+  
+  <meta name="description" content="В этой статье мы попробуем разобраться с тем, что такое полиморфизм, для чего он нужен и какой он бывает. А также мы посмотрим на то как те или иные &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://algolov.github.io/blog/2014/11/20/polimorphism-in-scala">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Александр Головко" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+<link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-56791437-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Александр Головко</a></h1>
+  
+    <h2>истории о программировании&#8230;</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:algolov.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Заметки о полиморфизме в Scala</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-11-20T02:08:41+10:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:08 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>В этой статье мы попробуем разобраться с тем, что такое полиморфизм, для чего он нужен и какой он бывает. А также мы посмотрим на то как те или иные его проявления реализуются в языке Scala.</p>
+
+<!-- more -->
+
+
+<p>Полиморфизм является свойством системы типов языка. Основная задача системы типов, это сокращение ошибок в программах, поэтому типы накладывают своего рода ограничения, которые помогают усилить корректность программ. Scala - язык с мощной системой типов и статической сильной типизацией. Это значит, что типы всех переменных и выражений должны быть определены на этапе компиляции (статически). Так вот, полиморфизм позволяет увеличить гибкость и выразительность языка, сохраняя при этом безопасность типов, даже если тип выражения статически не известен.</p>
+
+<p>Полиморфизм бывает четерех видов, которые в общем объединяются в две категории:</p>
+
+<ol>
+<li>Универсальный (Universal)
+
+<ul>
+<li>Параметрический полиморфизм (parametric polymotphism/generics)</li>
+<li>Полиморфизм включения (including polimorphism/subtyping)</li>
+</ul>
+</li>
+<li>Cпециальный (Ad-hoc)
+
+<ul>
+<li>Перегрузка (overloading) и Тайпклассы (typeclasses)</li>
+<li>Приведение типов (coercion)</li>
+</ul>
+</li>
+</ol>
+
+
+<p>Существует также некоторые разночтения в терминах, например в ООП мире параметрический полиморфизм в основном называют <code>generics</code> (обобщенное программирование), в то время как в мире ФП такой тип полиморфизма называют просто <code>полиморфизм</code>. В то же время в ООП просто полиморфизмом называют полиморфизм включения, его еще называют выделением подтипа (subtyping или subtype polimorphism). В этой статье мы коснемся универсального полиморфизма.</p>
+
+<h2>Универсальный полиморфизм</h2>
+
+<p>Особенность универсально полиморфных функций и типов в том, что они могут <em>одинаково</em> обработать (потенциально) бесконечное количество типов. Такая особенность может досигаться разными способами. Использование параметрического полиморфизма позволяет создавать обобщенные функции и типы данных, указывая вместо действительных типов - типовые переменные, что позволяет обрабатывать значения не завися от их типа. В случае использования полиморфизма включения поведение полиморфной функции ограничивается множеством типов, связанных иерархией наследования (отношения супертип-подтип).</p>
+
+<p>Связь этих двух подвидов универсального полиморфизма, обеспечивается посредством связанной квантификации и вариантности конструкторов типов. При программировании в Scala оба этих вида тесно переплетаются между собой, поэтому нет смысла разделять их на отдельные темы, я просто буду указывать где проявляется тот или иной вид.</p>
+
+<p>Для того, что бы лучше понять применение полиморфизма давайте представим, что мы решили написать свою библиотеку для работы с коллекциями. В нашем случае мы будем рассматривать пример реализации списка. Начнем с того, что определим список целых чисел:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">IntList</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">isEmpty</span><span class="k">:</span> <span class="kt">Boolean</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">head</span><span class="k">:</span> <span class="kt">Int</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">tail</span><span class="k">:</span> <span class="kt">IntList</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">toString</span> <span class="k">=</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">isEmpty</span><span class="o">)</span> <span class="s">&quot;Nil&quot;</span> <span class="k">else</span> <span class="n">s</span><span class="s">&quot;$head :: ${tail.toString}&quot;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="k">case</span> <span class="k">object</span> <span class="nc">Nil</span> <span class="k">extends</span> <span class="nc">IntList</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">isEmpty</span> <span class="k">=</span> <span class="kc">true</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">head</span> <span class="k">=</span> <span class="k">throw</span>  <span class="k">new</span> <span class="nc">NoSuchElementException</span><span class="o">(</span><span class="s">&quot;Nil.head&quot;</span><span class="o">)</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">tail</span> <span class="k">=</span> <span class="k">throw</span>  <span class="k">new</span> <span class="nc">NoSuchElementException</span><span class="o">(</span><span class="s">&quot;Nil.tail&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">Cons</span><span class="o">(</span><span class="k">val</span> <span class="n">head</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="k">val</span> <span class="n">tail</span><span class="k">:</span> <span class="kt">IntList</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">IntList</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">isEmpty</span> <span class="k">=</span> <span class="kc">false</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Реализация нашего списка состоит из трех частей, это базовый тип <code>IntList</code> и наследующие от него класс <code>Cons</code> и объект <code>Nil</code>. Такая структура представляет собой пример полиморфизма включения. Благодоря такому полиморфизму, мы можем использовать <code>Cons</code> и <code>Nil</code> там, где требуется <code>IntList</code></p>
+
+<p><img src="/images/polymorphism-in-scala/inheretance.png" title="'Полиморфизм включения'" ></p>
+
+<p>Рассмотрим реализацию более подробно.</p>
+
+<p>Итак, в первой строке мы объявили новый тип данных <code>IntList</code>. Слово <code>trait</code> в определении типа говорит о том, что данный тип является чем-то вроде интерфейсов в Java, с той разницей (не единственной), что может содержать не только абстрактные методы (такие как <code>isEmpty</code>, <code>head</code>, <code>tail</code>), но и методы с реализацией (например <code>toString</code>). Как и интерфейсы в Java мы не можем напрямую создать экземпляр трейта при помощи ключевого слова <code>new</code>. Слово <code>sealed</code> перед <code>trait</code> означает, что все реализации данного трейта должны быть помещены в тот же самый файл, где объявлен наш трейт. Таким образом, наш список может конструироваться только при помощи строительных блоков которые мы предоставим - <code>Cons</code> и <code>Nil</code>, они так же называются <em>конструкторами данных</em>. Конструктор <code>Nil</code>, создает пустой список и так как он не содержит элементов, то операции доступа к ним вызывают исключения. Мы будем использовать его как маркер конца непустого списка. Конструктор непустого списка <code>Cons</code> содержит первый элемент и список остальных элементов, который может быть в том числе и пустым списком. Мы используем ключевое слово <code>case</code> при объявлении конструкторов списка, таким образом мы получаем некоторые преимущества над обычными классами. Во-первых case-классы могут использоваться при сопоставлении с образцом (pattern matching), таким образом позволяя деконструировать список. Во вторых, для <code>case</code>-классов создается объект-компаньен содержащий метод <code>apply</code> позволяющий создавать экземпляры класса без ключевого слова <code>new</code>. В третьих параметры конструктора становятся публичными полями класса. В Scala конструктор является частью определения класса, поэтому параметры конструктора в классе <code>Cons</code> становятся публичными и переопределяют абстрактные методы базового класса. Так как <code>Nil</code> не принимает значений в качестве параметров, то мы определяем его как объект-одиночку - <code>case object</code>.</p>
+
+<p>Рассмотрим пример создания списка целых чисел:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">intList</span><span class="k">:</span> <span class="kt">IntList</span> <span class="o">=</span> <span class="nc">Cons</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span> <span class="nc">Nil</span><span class="o">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>repl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">intList</span><span class="k">:</span> <span class="kt">IntList</span> <span class="o">=</span> <span class="nc">Cons</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span> <span class="nc">Nil</span><span class="o">)))</span>
+</span><span class='line'><span class="n">intList</span><span class="k">:</span> <span class="kt">IntList</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">::</span> <span class="mi">2</span> <span class="o">::</span> <span class="mi">3</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Итак, мы достигли цели, мы создали библиотеку коллекций целых чисел и уже успешно использовали ее в нескольких проектах.  Но что если нам однажды потребуется работать не только с целыми числами, но и с другими типами данных такими как числа с плавающей точкой или строки? Один из вариантов - скопировать реализацию для целых чисел и заменить тип с <code>Int</code> на нужный. Но таким образом нам придется повторять это снова и снова для каждого нового типа с которым мы захотим рабротать, при этом код будет непомерно разрастаться, что увеличит количество ошибок, усложнит рефакторинг и т.д и т.п. Есть способ лучше, мы можем использовать параметрический полиморфизм. Для этого нам нужно добавить параметр типа и заменить конкретный тип <code>Int</code>, на типовую переменную, указанную в параметре. Давайте попробуем усовершенствовать нашу реализацию:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">sealed</span> <span class="k">abstract</span> <span class="k">trait</span> <span class="nc">List</span><span class="o">[</span><span class="kt">+T</span><span class="o">]</span> <span class="o">{</span>  <span class="c1">// конструктор типа</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">isEmpty</span><span class="k">:</span> <span class="kt">Boolean</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">head</span><span class="k">:</span> <span class="kt">T</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">tail</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span>
+</span><span class='line'>  <span class="c1">// полиморфный метод, создает новый список</span>
+</span><span class='line'>  <span class="c1">// путем применения переданной функции</span>
+</span><span class='line'>  <span class="c1">// к каждому элементу списка</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">map</span><span class="o">[</span><span class="kt">U</span><span class="o">](</span> <span class="n">f</span> <span class="k">:</span> <span class="kt">T</span> <span class="o">=&gt;</span> <span class="n">U</span> <span class="o">)</span> <span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">U</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">this</span> <span class="k">match</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nc">Cons</span><span class="o">(</span><span class="n">head</span><span class="o">,</span> <span class="n">tail</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Cons</span><span class="o">(</span><span class="n">f</span><span class="o">(</span><span class="n">head</span><span class="o">),</span> <span class="n">tail</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">f</span><span class="o">))</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nc">Nil</span> <span class="k">=&gt;</span> <span class="nc">Nil</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">toString</span> <span class="k">=</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">isEmpty</span><span class="o">)</span> <span class="s">&quot;Nil&quot;</span> <span class="k">else</span> <span class="n">s</span><span class="s">&quot;$head :: ${tail.toString}&quot;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">case</span> <span class="k">object</span> <span class="nc">Nil</span> <span class="k">extends</span> <span class="nc">List</span><span class="o">[</span><span class="kt">Nothing</span><span class="o">]</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">isEmpty</span> <span class="k">=</span> <span class="kc">true</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">head</span> <span class="k">=</span> <span class="k">throw</span>  <span class="k">new</span> <span class="nc">NoSuchElementException</span><span class="o">(</span><span class="s">&quot;Nil.head&quot;</span><span class="o">)</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">tail</span> <span class="k">=</span> <span class="k">throw</span>  <span class="k">new</span> <span class="nc">NoSuchElementException</span><span class="o">(</span><span class="s">&quot;Nil.tail&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">Cons</span><span class="o">[</span><span class="kt">T</span><span class="o">](</span><span class="n">head</span><span class="k">:</span> <span class="kt">T</span><span class="o">,</span> <span class="n">tail</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">T</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">List</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span> <span class="o">{</span> <span class="c1">// конструктор типа</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">isEmpty</span> <span class="k">=</span> <span class="kc">false</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Мы сделали много изменений, но прежде чем мы перейдем к деталям того, что и зачем мы изменили, давайте посмотрим на пару примеров использования нашей новой реализации:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">intList</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span>
+</span><span class='line'>  <span class="nc">Cons</span><span class="o">[</span><span class="kt">Int</span><span class="o">](</span><span class="mi">1</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">[</span><span class="kt">Int</span><span class="o">](</span><span class="mi">2</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">[</span><span class="kt">Int</span><span class="o">](</span><span class="mi">3</span><span class="o">,</span><span class="nc">Nil</span><span class="o">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">intList</span><span class="o">.</span><span class="n">map</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span> <span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="o">{</span> <span class="n">x</span> <span class="o">*</span> <span class="mf">0.1</span> <span class="o">}</span> <span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>repl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">intList</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">[</span><span class="kt">Int</span><span class="o">](</span><span class="mi">1</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">[</span><span class="kt">Int</span><span class="o">](</span><span class="mi">2</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">[</span><span class="kt">Int</span><span class="o">](</span><span class="mi">3</span><span class="o">,</span><span class="nc">Nil</span><span class="o">)))</span>
+</span><span class='line'><span class="n">intList</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="mi">1</span> <span class="o">::</span> <span class="mi">2</span> <span class="o">::</span> <span class="mi">3</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="n">intList</span><span class="o">.</span><span class="n">map</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span> <span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="o">{</span> <span class="n">x</span> <span class="o">*</span> <span class="mf">0.1</span> <span class="o">}</span> <span class="o">)</span>
+</span><span class='line'><span class="n">res0</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Double</span><span class="o">]</span> <span class="k">=</span> <span class="mf">0.1</span> <span class="o">::</span> <span class="mf">0.2</span> <span class="o">::</span> <span class="mf">0.30000000000000004</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В первом выражении примера мы объявляем переменную <code>intList</code> в качестве списка целых чисел, заменив формальный параметр <code>T</code> типом <code>Int</code>, затем конструируем список целых чисел при помощи конструктора данных <code>Cons</code>, с передачей действительного параметра - <code>Int</code> и получившийся список присваеваем переменной <code>intList</code>.
+Во втором выражении мы вызываем полиморфную функцию <code>map</code> на только что созданном списке и в качестве параметра типа передаем <code>Double</code>, а следом за ним в качестве аргумента передаем анонимную функцию.
+На самом деле в Scala можно обойтись без явного указания параметра типа. Scala обладает мощной системой вывода типов и может вывести тип выражения даже когда он явно не указан, основываясь, например, на типах аргументов функции или на типе ожидаемого результата (тем не менее, считается хорошей практикой всегда анотировать публичные функции и переменные которым присваевается результат сложных выражений):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// создаем список строк</span>
+</span><span class='line'><span class="k">val</span> <span class="n">stringList</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
+</span><span class='line'>  <span class="nc">Cons</span><span class="o">(</span><span class="s">&quot;red&quot;</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">(</span><span class="s">&quot;green&quot;</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">(</span><span class="s">&quot;blue&quot;</span><span class="o">,</span> <span class="nc">Nil</span><span class="o">)))</span>
+</span><span class='line'><span class="c1">// делаем заглавной первую букву в каждой строке</span>
+</span><span class='line'><span class="n">stringList</span> <span class="n">map</span> <span class="o">{</span> <span class="k">_</span><span class="o">.</span><span class="n">capitalize</span> <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>repl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">stringList</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">(</span><span class="s">&quot;red&quot;</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">(</span><span class="s">&quot;green&quot;</span><span class="o">,</span> <span class="nc">Cons</span><span class="o">(</span><span class="s">&quot;blue&quot;</span><span class="o">,</span> <span class="nc">Nil</span><span class="o">)))</span>
+</span><span class='line'><span class="n">stringList</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="n">red</span> <span class="o">::</span> <span class="n">green</span> <span class="o">::</span> <span class="n">blue</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="n">stringList</span> <span class="n">map</span> <span class="o">{</span> <span class="k">_</span><span class="o">.</span><span class="n">capitalize</span> <span class="o">}</span>
+</span><span class='line'><span class="n">res1</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Red</span> <span class="o">::</span> <span class="nc">Green</span> <span class="o">::</span> <span class="nc">Blue</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Теперь вернемся к новой реализации и перейдем к описанию сделанных изменений. Во-первых, вместо трейта <code>IntList</code> появился полиморфный абстрактный класс <code>List[+T]</code>. В принципе, с тем же успехом можно было бы параметризовать и трейт, но так как функциональность базового типа будет использоваться только двумя наследниками и мы не планиурем предоставлять возможность наследования от <code>List</code> в каких-то других несвязанных классах, то характеристик абстрактного класса будет вполне достаточно, к тому же такой вариант будет немного более производительным. Так же, мы добавили параметр типа <code>[+T]</code> к базовому классу <code>List</code> и к классу-конструктора непустого списка <code>Cons</code>, тем самым мы указали, что теперь внутри их определений мы можем использовать <code>T</code> в качестве <em>переменной типа</em>, в которую при инстанциировании будет подставлен конкретный тип. Полиморфный класс <code>List[+T]</code> также называют <em>конструктором типа</em>, потому что теперь при помощи данного класса вы можете создавать (конструировать) другие типы, просто заменив параметр обобщенного типа на конкретный. То есть конструктор типов <code>List</code> может создавать семейство новых типов, таких как <code>List[Int]</code>, <code>List[String]</code> и так далее. Так же мы добавили новую функцию <code>map</code> которая является полиморфной, так как тоже принимает параметр типа. Функция <code>map</code> способна принимать в качестве аргумента любую функцию принимающую на вход элемент списка и возвращающую результат типа, указаного в качестве действительного параметра типа. То есть если вернуться к примерам выше, то можно увидить, что выполняя функцию <code>map</code> на списке целых чисел мы можем передать в нее, например, функцию типа <code>Int =&gt; Double</code>, где <code>Double</code> конкретизирует типовую переменную <code>U</code>. Теперь рассмотрим объект <code>Nil</code>. Так как объект это по сути конкретный экземпляр какого-то класса, то он естессвенно не может быть полиморфным и следовательно мы не можем просто расширить полиморфный <code>List[T]</code>. Но если этого не сделать, то мы не сможем трактовать его как список. И например, не сможем использовать его при конструировании непустого списка. Для решения этой проблемы нам нужно указать конкретный тип в качестве действительного параметра базового класса, что бы объект <code>Nil</code> был экземпляром конкретного (а не полиморфного) типа. Но какой тип указать? Ведь мы хотим что бы <code>Nil</code> мог работать с любым типом, с которым работает <code>List</code>. В Scala есть специальный тип <code>Nothing</code> который является подтипом всех остальных типов в Scala. Поэтому мы указываем, что объект <code>Nil</code> является экземпляром типа <code>List[Nothing]</code>. В качестве последнего изменения мы добавили знак <code>+</code> у параметра типа нашего списка <code>List[+T]</code>. Прежде чем объяснить, что это значит, давайте уберем его и попробуем скомпелировать следующий код:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">l</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Double</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="mf">0.5</span><span class="o">,</span> <span class="nc">Nil</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>repl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">l</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Double</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="mf">0.5</span><span class="o">,</span> <span class="nc">Nil</span><span class="o">)</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">11</span><span class="k">:</span> <span class="kt">error:</span> <span class="k">type</span> <span class="kt">mismatch</span><span class="o">;</span>
+</span><span class='line'> <span class="n">found</span>   <span class="k">:</span> <span class="kt">Nil.type</span>
+</span><span class='line'> <span class="n">required</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Double</span><span class="o">]</span>
+</span><span class='line'><span class="nc">Note</span><span class="k">:</span> <span class="kt">Nothing</span> <span class="k">&lt;:</span> <span class="kt">Double</span> <span class="o">(</span><span class="kt">and</span> <span class="kt">Nil.</span><span class="k">type</span> <span class="k">&lt;:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Nothing</span><span class="o">]),</span> <span class="n">but</span> <span class="k">trait</span> <span class="nc">List</span> <span class="n">is</span> <span class="n">invariant</span> <span class="n">in</span> <span class="k">type</span> <span class="kt">T.</span>
+</span><span class='line'><span class="kt">You</span> <span class="kt">may</span> <span class="kt">wish</span> <span class="kt">to</span> <span class="kt">define</span> <span class="kt">T</span> <span class="kt">as</span> <span class="kt">+T</span> <span class="kt">instead.</span> <span class="o">(</span><span class="kt">SLS</span> <span class="err">4</span><span class="kt">.</span><span class="err">5</span><span class="o">)</span>
+</span><span class='line'>       <span class="kt">val</span> <span class="kt">l:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Double</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="mf">0.5</span><span class="o">,</span> <span class="nc">Nil</span><span class="o">)</span>
+</span><span class='line'>                                               <span class="o">^</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В результате мы получем ошибку сообщающую о несоответствии типа, потому что класс <code>List</code> является инвариантным относительно <code>T</code>. Давайте разберем по шагам, что происходит. При создании экземлпяра класса <code>Cons</code> в качестве действительного параметра типа указывается тип <code>Double</code>, это значит, что конструктор класса <code>Cons</code> будет ожидать, что ему передадут два значения с типами <code>Double</code> и  <code>List[Double]</code> соответсвенно. В качестве первого значения мы передаем <code>0.5</code>, что соответсвует ожидаемому типу <code>Double</code>, а вот в качестве второго значения мы передаем экземпляр типа <code>List[Nothing]</code> и это не тот тип, который ожидает компилятор. Несмотря на то, что <code>Nothing</code> является подтипом <code>Double</code>, мы не можем сказать того же о типах <code>List[Double]</code>  и <code>List[Nothing]</code>. В Scala все параметризованные типы по-умолчанию инвариантны. Для того, что бы <code>List[Nothing]</code>, мог рассматриваться в качестве допустимого аргумента, там где ожидается <code>List[Double]</code> мы должны поменять вариантность полиморфного типа <code>List</code>, добавив к параметру типа знак <code>+</code>. И это пример где параметрический полиморфизм и полиморфизм включения дополняют друг-друга. Давайте рассмотрим эту тему подробнее.</p>
+
+<h3>Вариантность</h3>
+
+<p>В Scala существует возможность спроецировать отношения родства между типами на отношения родства между конструкторами типов. То есть указать ответ на вопрос, каким образом два типа имеющие наследственную связь, буду связаны между собой при использовании в полиморфном типе.  По умолчанию все параметрические типы в Scala <em>инвариантны</em>(перед именем формального параметра типа не стоит никаких знаков), так же они могут быть <em>ковариантны</em> (знак <code>+</code> перед именем формального параметра типа) и <em>контравариантны</em> (знак <code>-</code> перед именем формального параметра типа).</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align:center;"> Вариантность   </th>
+<th style="text-align:center;"> Значение                                 </th>
+<th style="text-align:center;"> Нотация языка Scala     </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;"> ковариант      </td>
+<td style="text-align:center;"> C[T’] это подкласс класса C[T]           </td>
+<td style="text-align:center;"> [+T]                    </td>
+</tr>
+<tr>
+<td style="text-align:center;"> контрвариант   </td>
+<td style="text-align:center;"> C[T] это подкласс класса C[T’]           </td>
+<td style="text-align:center;"> [-T]                    </td>
+</tr>
+<tr>
+<td style="text-align:center;"> инвариант      </td>
+<td style="text-align:center;"> C[T] и C[T’] не взаимосвязаны            </td>
+<td style="text-align:center;"> [T]                     </td>
+</tr>
+</tbody>
+</table>
+
+
+<p>Что же это значит?</p>
+
+<h4>Ковариантность ([+T])</h4>
+
+<p>Давайте представим, что у нас есть тип данных студент, который является подтипом более общего типа человек:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">trait</span> <span class="nc">Person</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">name</span><span class="k">:</span> <span class="kt">String</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">toString</span> <span class="k">=</span> <span class="n">s</span><span class="s">&quot;$name&quot;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">Student</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Person</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>И на основе отношений родства данных типов возникает вопрос. Считать ли тип <code>List[Student]</code> подтипом более общего типа <code>List[Person]</code>, если следовать логике, то &ldquo;группа студентов&rdquo; это частный случай более общего понятия &ldquo;группа людей&rdquo;, а это значит, что студенты должны обладать всеми качествами людей и поэтому могут быть использованы там, где требуются люди. Значит ответ на наш вопрос должен быть - &ldquo;да&rdquo;. Для того чтобы соответствовать таким отношениям наследственности, наш полиморфный список дожен быть ковариантным к своему параметру типа, что обозначается как <code>List[+T]</code>. Более кратко ковариантность можно описать следующим образом: <em>если S подтип T, то С[S] подтип C[T]</em>, что позволяет использовать <em>C[S]</em>, там где на самом деле требуется <em>C[T]</em>. Пример использования ковариантности мы ужевидили ранее. Благодоря тому, что наш список ковариантен, мы можем передать <code>Nil</code> в качестве второго параметра конструктора <code>Cons</code>, указав тем самым на конец списка.</p>
+
+<h4>Контрвариантность ([-T])</h4>
+
+<p>Существует так же обратный вид вариантности - контравариантность, которая удовлетворяет следующему положению - <em>если T подтип S, то C[S] подтип C[T]</em>, то есть отношения наследования между типами переносятся на конструкторы типов в обратом порядке. Это значит, что список людей <code>List[Person]</code> может рассматриваться в качестве подтипа списка студентов <code>List[Student]</code>. Полезность контрвариантности трудно понять интуитивно. Поэтому рассмотрим использование контрвариантности на примере.
+Так как в Scala функции являются объектами, существует конструктор (в том числе) унарных функций, который мы и рассмотрим в качестве примера. Определяется он следующим образом:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">trait</span> <span class="nc">Function1</span><span class="o">[</span><span class="kt">-T</span>,<span class="kt">+R</span><span class="o">]</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">v</span><span class="k">:</span> <span class="kt">T</span><span class="o">)</span><span class="k">:</span> <span class="kt">R</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Мы видим, что функция контрвариантна к своему аргументу (<code>-T</code>) и ковариантна к своему результату (<code>+R</code>). Давайте теперь создадим некий список студентов:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">students</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">(</span><span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Bob&quot;</span><span class="o">),</span> <span class="nc">Cons</span><span class="o">(</span><span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Jane&quot;</span><span class="o">),</span> <span class="nc">Nil</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Так же определим функцию, которая возвращает имя человека, переданного ей в качестве параметра. Мы определим ее более наглядным способом:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">personName</span><span class="k">:</span> <span class="kt">Function1</span><span class="o">[</span><span class="kt">Person</span>, <span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span><span class="n">p</span><span class="k">:</span> <span class="kt">Person</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Теперь для того, что бы получить список имен всех студентов мы можем написать следующее:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">studentsNames</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="n">students</span> <span class="n">map</span> <span class="n">personName</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>repl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">students</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">(</span><span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Bob&quot;</span><span class="o">),</span> <span class="nc">Cons</span><span class="o">(</span><span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Jane&quot;</span><span class="o">),</span> <span class="nc">Nil</span><span class="o">))</span>
+</span><span class='line'><span class="n">students</span><span class="k">:</span> <span class="kt">Cons</span><span class="o">[</span><span class="kt">Student</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Bob</span> <span class="o">::</span> <span class="nc">Jane</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">personName</span><span class="k">:</span> <span class="kt">Function1</span><span class="o">[</span><span class="kt">Person</span>, <span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">(</span><span class="n">p</span><span class="k">:</span> <span class="kt">Person</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+</span><span class='line'><span class="n">personName</span><span class="k">:</span> <span class="kt">Person</span> <span class="o">=&gt;</span> <span class="nc">String</span> <span class="k">=</span> <span class="o">&lt;</span><span class="n">function1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">studentsNames</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="n">students</span> <span class="n">map</span> <span class="n">personName</span>
+</span><span class='line'><span class="n">studentsNames</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Bob</span> <span class="o">::</span> <span class="nc">Jane</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Благодоря тому, что <code>Function1</code> контрвариантна к своему аргументу, приведенный выше код будет работать без ошибок. Несмотря на то, что функция <code>map</code> в качестве аргумента ожидает функцию типа <code>Student =&gt; String</code>, но мы предоставляем функцию типа <code>Person =&gt; String</code>.
+Осталось рассмотреть последний вид вариантности.</p>
+
+<h4>Инвариантность ([T])</h4>
+
+<p>Инвариантность это отсутствие наследственных взаимосвязей относительно параметра типа. Если параметр типа ни ковариантный, ни контрвариантный, значит он инвариантный. Инвариантность в основном применяется с изменяемыми структурами данных. Если посмотреть на коллекцию Scala с изменяемыми класами (scala.collection.mutable), то мы увидим что все они инвариантны. Что бы понять почему, давайте рассмотрим пример с массивами. Предположим, что массивы в Scala ковариантны (на самом деле инвариантны), тогда следующий код был бы корректным с точки зрения компилятора:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">mutableStudents</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Student</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Array</span><span class="o">(</span><span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Bob&quot;</span><span class="o">),</span> <span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Joe&quot;</span><span class="o">))</span>
+</span><span class='line'><span class="c1">// boom теперь указывает на тот же массив, что и mutableStudents</span>
+</span><span class='line'><span class="k">val</span> <span class="n">boom</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Any</span><span class="o">]</span> <span class="k">=</span> <span class="n">mutableStudents</span>  <span class="c1">// Так нельзя. Но для примера, представим, что можно</span>
+</span><span class='line'><span class="c1">// изменяем первый элемент массива</span>
+</span><span class='line'><span class="n">boom</span><span class="o">.</span><span class="n">update</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="s">&quot;Oooops&quot;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>repl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">mutableStudents</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Student</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Array</span><span class="o">(</span><span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Bob&quot;</span><span class="o">),</span> <span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Joe&quot;</span><span class="o">))</span>
+</span><span class='line'><span class="n">mutableStudents</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Student</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Array</span><span class="o">(</span><span class="nc">Bob</span><span class="o">,</span> <span class="nc">Joe</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">boom</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Any</span><span class="o">]</span> <span class="k">=</span> <span class="n">mutableStudents</span> <span class="c1">// ошибка не соответствия типов</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">11</span><span class="k">:</span> <span class="kt">error:</span> <span class="k">type</span> <span class="kt">mismatch</span><span class="o">;</span>
+</span><span class='line'> <span class="n">found</span>   <span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Student</span><span class="o">]</span>
+</span><span class='line'> <span class="n">required</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Any</span><span class="o">]</span>
+</span><span class='line'><span class="nc">Note</span><span class="k">:</span> <span class="kt">Student</span> <span class="k">&lt;:</span> <span class="kt">Any</span><span class="o">,</span> <span class="n">but</span> <span class="k">class</span> <span class="nc">Array</span> <span class="n">is</span> <span class="n">invariant</span> <span class="n">in</span> <span class="k">type</span> <span class="kt">T.</span>
+</span><span class='line'><span class="kt">You</span> <span class="kt">may</span> <span class="kt">wish</span> <span class="kt">to</span> <span class="kt">investigate</span> <span class="kt">a</span> <span class="kt">wildcard</span> <span class="k">type</span> <span class="kt">such</span> <span class="kt">as</span> <span class="kt">`_ &lt;: Any`.</span> <span class="o">(</span><span class="kt">SLS</span> <span class="err">3</span><span class="kt">.</span><span class="err">2</span><span class="kt">.</span><span class="err">10</span><span class="o">)</span>
+</span><span class='line'>       <span class="kt">val</span> <span class="kt">boom:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Any</span><span class="o">]</span> <span class="k">=</span> <span class="n">mutableStudents</span>
+</span><span class='line'>                              <span class="o">^</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Данный пример показывает, что если бы массивы были ковариантны, то в <code>mutableStudents</code> уже хранился бы массив не с двумя студентами Bob и Joe, а массив, где вместо Bob&#8217;a было бы &ldquo;Oooops&rdquo;.</p>
+
+<p>Возможно с первого раза разобраться с вариантностью будет сложно. Но есть некоторые правила для выбора вариантности. Они зависят от того, в какой позиции будет стоять переменная типа. Существуют ковариантные или положительные позиции и контрвариантные или отрицательные позиции. Положительными считаются следующие позиции - это типы значений (полей данных) в классах/трейтах, типы результатов возвращаемых методами класса/трейта, а так же позиция в качестве аргумента для параметров типов других ковариантных классов. Отрицательными позициями считаются типы формальных параметров метода класса/трейта. Если сказать проще, то в общем случае изменяемые контейнеры должны быть инвариантными, неизменяемые контейнеры - ковариантными, входные значения для функций - контрвариантны, а выходыные - ковариантны. В любом случае компилятор Scala проверяет вариантность каждого параметра типа и если где-то он используется в неправильной позиции, то компилятор обязательно сообщит об этом и откажется компилировать код.</p>
+
+<h3>Границы изменения типов</h3>
+
+<p>Но иногда проверка вариативности мешает реализовать, в принципе, корректные вещи. Например, давайте добавим к нашему списку метод для добавления нового элемента:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="o">::(</span><span class="n">hd</span><span class="k">:</span> <span class="kt">T</span><span class="o">)</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">(</span><span class="n">hd</span><span class="o">,</span> <span class="k">this</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Мы добавляем этот метод непосредственно в базовый класс <code>List[+T]</code>. Между делом, данный метод не совсем обычный, дело в том, что в Scala все методы, которые закнчиваются на двоеточие имеют правую ассоциативность (мы увидим что это значит на примере ниже). К сожалению, приведенный код не скомпилируется и компилятор будет ругаться, что ковариантный тип T оказался в контрвариантной позиции, то есть в качестве типа формального параметра <code>hd</code>. Обойти эту проблему можно сделав метод полиморфным, добавив еще один параметр типа:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="o">::[</span><span class="kt">B</span><span class="o">](</span><span class="n">hd</span><span class="k">:</span> <span class="kt">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">(</span><span class="n">hd</span><span class="o">,</span> <span class="k">this</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Теперь у метода <code>::</code> появился свой параметр типа <code>B</code>, и так как он является инвариантным (инвариантные типы могут появляться в любой позиции), то его появление в качестве типа формального параметра функции не должно вызывать проблем. Однако, проблема появляется в реализации даного метода. Теперь, мы не можем сконструировать новый список путем добавления элемента типа <code>B</code> к списку элементов типа <code>T</code>. И это логически верно, ведь параметр типа <code>B</code> может представлять любой тип. Вот если бы его можно было как-то ограничить только допустимыми типами. Это делается следующим образом:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="o">::[</span><span class="kt">B</span> <span class="k">&gt;:</span> <span class="kt">T</span><span class="o">](</span><span class="n">hd</span><span class="k">:</span> <span class="kt">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Cons</span><span class="o">(</span><span class="n">hd</span><span class="o">,</span> <span class="k">this</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>То есть мы добавили <code>&gt;: T</code> к параметру типа, тем самым указав, что тип <code>T</code> является нижней границей типа <code>B</code> (<code>B</code> должен быть супертипом для <code>T</code>). И с указанием данного условия код успешно скомпелируется. Также, благодаря добавлению параметра типа к методу <code>::</code>, мы дополнительно улулчшили его реализацию. Если мы добавим элемент с типом отличающимся от исходного типа списка, то результирующий список изменит свой тип в сторону типа новго элемента. Давайте посмотрим на примере:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">strings</span> <span class="k">=</span> <span class="s">&quot;one&quot;</span> <span class="o">::</span> <span class="s">&quot;two&quot;</span> <span class="o">::</span> <span class="s">&quot;three&quot;</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">val</span> <span class="n">anyRefString</span> <span class="k">=</span> <span class="nc">AnyRef</span> <span class="o">::</span> <span class="n">strings</span> <span class="c1">// anyRefString будет типа List[Object]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>repl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">strings</span> <span class="k">=</span> <span class="s">&quot;one&quot;</span> <span class="o">::</span> <span class="s">&quot;two&quot;</span> <span class="o">::</span> <span class="s">&quot;three&quot;</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span><span class='line'><span class="n">strings</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="n">one</span> <span class="o">::</span> <span class="n">two</span> <span class="o">::</span> <span class="n">three</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">anyRefString</span> <span class="k">=</span> <span class="nc">AnyRef</span> <span class="o">::</span> <span class="n">strings</span>
+</span><span class='line'><span class="n">anyRefString</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Object</span><span class="o">]</span> <span class="k">=</span> <span class="k">object</span> <span class="nc">AnyRef</span> <span class="o">::</span> <span class="n">one</span> <span class="o">::</span> <span class="n">two</span> <span class="o">::</span> <span class="n">three</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Обратите внимание на то, как конструируется новый список в первой строке. Такая запись возможна благодаря правой ассоциативности метода <code>::</code>. Если переписать это выражение в более привычный вид, это будет выглядить вот так:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="nc">Nil</span><span class="o">.::(</span><span class="s">&quot;three&quot;</span><span class="o">).::(</span><span class="s">&quot;two&quot;</span><span class="o">).::(</span><span class="s">&quot;one&quot;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Помимо указания нижней границы, можно также указывать и верхнюю границу типа <code>T &lt;: U</code>, например:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="n">personName</span><span class="o">[</span><span class="kt">T</span> <span class="k">&lt;:</span> <span class="kt">Person</span><span class="o">](</span><span class="n">p</span><span class="k">:</span> <span class="kt">T</span><span class="o">)</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+</span><span class='line'><span class="k">def</span> <span class="n">studentName</span><span class="o">[</span><span class="kt">T</span> <span class="k">&lt;:</span> <span class="kt">Student</span><span class="o">](</span><span class="n">s</span><span class="k">:</span> <span class="kt">T</span><span class="o">)</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">val</span> <span class="n">students</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Student</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Bob&quot;</span><span class="o">)</span> <span class="o">::</span> <span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Joe&quot;</span><span class="o">)</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span><span class='line'><span class="k">val</span> <span class="n">persons</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Person</span><span class="o">]</span> <span class="k">=</span> <span class="n">students</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">students</span> <span class="n">map</span> <span class="n">personName</span>
+</span><span class='line'><span class="n">students</span> <span class="n">map</span> <span class="n">studentName</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">persons</span> <span class="n">map</span> <span class="n">studentName</span> <span class="c1">// ошибка</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>repl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">def</span> <span class="n">personName</span><span class="o">[</span><span class="kt">T</span> <span class="k">&lt;:</span> <span class="kt">Person</span><span class="o">](</span><span class="n">p</span><span class="k">:</span> <span class="kt">T</span><span class="o">)</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+</span><span class='line'><span class="n">personName</span><span class="k">:</span> <span class="err">[</span><span class="kt">T</span> <span class="k">&lt;:</span> <span class="kt">Person</span><span class="err">]</span><span class="o">(</span><span class="kt">p:</span> <span class="kt">T</span><span class="o">)</span><span class="kt">String</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">def</span> <span class="n">studentName</span><span class="o">[</span><span class="kt">T</span> <span class="k">&lt;:</span> <span class="kt">Student</span><span class="o">](</span><span class="n">s</span><span class="k">:</span> <span class="kt">T</span><span class="o">)</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span>
+</span><span class='line'><span class="n">studentName</span><span class="k">:</span> <span class="err">[</span><span class="kt">T</span> <span class="k">&lt;:</span> <span class="kt">Student</span><span class="err">]</span><span class="o">(</span><span class="kt">s:</span> <span class="kt">T</span><span class="o">)</span><span class="kt">String</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">students</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Student</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Bob&quot;</span><span class="o">)</span> <span class="o">::</span> <span class="nc">Student</span><span class="o">(</span><span class="s">&quot;Joe&quot;</span><span class="o">)</span> <span class="o">::</span> <span class="nc">Nil</span>
+</span><span class='line'><span class="n">students</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Student</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="nc">Bob</span><span class="o">,</span> <span class="nc">Joe</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">persons</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Person</span><span class="o">]</span> <span class="k">=</span> <span class="n">students</span>
+</span><span class='line'><span class="n">persons</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Person</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="nc">Bob</span><span class="o">,</span> <span class="nc">Joe</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="n">students</span> <span class="n">map</span> <span class="n">personName</span>
+</span><span class='line'><span class="n">res0</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="nc">Bob</span><span class="o">,</span> <span class="nc">Joe</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="n">students</span> <span class="n">map</span> <span class="n">studentName</span>
+</span><span class='line'><span class="n">res1</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="nc">Bob</span><span class="o">,</span> <span class="nc">Joe</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scala</span><span class="o">&gt;</span> <span class="n">persons</span> <span class="n">map</span> <span class="n">studentName</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">14</span><span class="k">:</span> <span class="kt">error:</span> <span class="k">type</span> <span class="kt">mismatch</span><span class="o">;</span>
+</span><span class='line'> <span class="n">found</span>   <span class="k">:</span> <span class="kt">Student</span> <span class="o">=&gt;</span> <span class="nc">String</span>
+</span><span class='line'> <span class="n">required</span><span class="k">:</span> <span class="kt">Person</span> <span class="o">=&gt;</span> <span class="o">?</span>
+</span><span class='line'>              <span class="n">persons</span> <span class="n">map</span> <span class="n">studentName</span>
+</span><span class='line'>                          <span class="o">^</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Из примера видно, что у параметра типа функции <code>personName</code> в качестве верхней границы указан тип <code>Person</code> и данная функция успешно выполняется как с аргументами типа <code>Person</code>, так и с его подтипами, что соответствует заданной границе. Но в тоже время функция <code>studentName</code> вызывает ошибку при попытке передачи в нее аргументов типа <code>Person</code>, так как для параметра типа верхняя граница задана типом <code>Student</code>, сооветсвенно эта функция допускает только аргументы с типом <code>Student</code> или его подтипами.</p>
+
+<h2>Заключение</h2>
+
+<p>Итак, мы прошли долгий путь и рассмотрели различные формы универсального полиморфизма. Мы узнали как при помощи выделения подтипов и параметризации достигать большей гибкости, увидели как эти возможности вместе с вариативностью помогают создавать обобщенный код и увеличивают возможости его переиспользования. Узнали как задание границ типов позволяет разрабатывать более типобезопасные решения.</p>
+
+<p>В следующей статье мы рассмотрим ad-hoc полиморфизм и в его рамках познакомимся с такими понятиями как неявные преобразования, границы контекста и границы отображения, познакомимся с реализацией typeclass&#8217;ов.</p>
+
+<p>Для того, что бы не раздувать объем статьи, за рамками рассмотрения остались такие связанные темы как: структурные типы, абстрактные типы, экзистенциальные типы, рекурсивные типы и возможно еще целый спектр возможностей системы типов Scala.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Golovko Aleksander</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-11-20T02:08:41+10:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:08 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/polymorphism/'>polymorphism</a>, <a class='category' href='/blog/categories/scala/'>scala</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://algolov.github.io/blog/2014/11/20/polimorphism-in-scala/" data-via="" data-counturl="http://algolov.github.io/blog/2014/11/20/polimorphism-in-scala/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/09/json-and-scala-play-json-library/" title="Previous Post: Json и Scala: Play Json Library">&laquo; Json и Scala: Play Json Library</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/11/20/polimorphism-in-scala/">Заметки о полиморфизме в Scala</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/09/json-and-scala-play-json-library/">Json и Scala: Play Json Library</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/09/json-and-scala/">Json и Scala</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Golovko Aleksander -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'scalalaz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://algolov.github.io/blog/2014/11/20/polimorphism-in-scala/';
+        var disqus_url = 'http://algolov.github.io/blog/2014/11/20/polimorphism-in-scala/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
