@@ -8,7 +8,7 @@ categories: [scala, json, play json]
 
 {% img /images/json-and-scala/play_json_pic.png 350 350 %}
 
-Данный пост входит в [серию статей]() на тему работы с JSON в Scala и в нем будет рассмотрена работа с библиотекой Play Json ([github](https://github.com/playframework/playframework/tree/master/framework/src/play-json), [документация](http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.libs.json.package)). Код основного примера и каркаса приложения можно [посмотреть в репозитории на github](https://github.com/algolov/JsonSeries.git). 
+Данный пост входит в [серию статей](http://algolov.github.io/blog/2014/03/09/json-and-scala/) на тему работы с JSON в Scala и в нем будет рассмотрена работа с библиотекой Play Json ([github](https://github.com/playframework/playframework/tree/master/framework/src/play-json), [документация](http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.libs.json.package)). Код основного примера и каркаса приложения можно [посмотреть в репозитории на github](https://github.com/algolov/JsonSeries.git). 
 <!-- more -->
 Данная библиотека была выделена из веб-фреймворка Play, который входит в Typesafe Reactive Platform и для парсинга JSON строк использует java-библиотеку [Jackson](http://jackson.codehaus.org/). Для того, что бы начать работать с библиотекой play json необходимо указать ее в качестве зависимости в вашем файле build.sbt:
 
@@ -27,7 +27,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 ```
 
-Рассматривать возможности данной библиотеки я буду на основе примера описанного в [заглавном посте]() серии, с которым необходимо ознакомится для полного понимания сути происходящего.
+Рассматривать возможности данной библиотеки я буду на основе примера описанного в [заглавном посте](http://algolov.github.io/blog/2014/03/09/json-and-scala/) серии, с которым необходимо ознакомится для полного понимания сути происходящего.
 Поэтому для начала, рассмотрим то, что предлагает нам библиотека Play Json, а затем как это использовать в рамках нашего примера.
 
 ## Play Json: Основные методы ##

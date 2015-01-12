@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Json and Scala"
+title: "Json и Scala"
 date: 2014-03-09 17:13:48 +1000
 comments: true
 categories: [scala, json, argonaut, play json, spray json]
@@ -12,9 +12,12 @@ categories: [scala, json, argonaut, play json, spray json]
 
   Статья   |   Библиотека        |   Описание
 ---------- | :-----------------: | ----------------------------
-           | [Play Json](http://www.playframework.com/documentation/2.2.x/ScalaJson)           | Библиотека для работы с json выделенная из популярного web framework'а - Play
+ [play json](http://algolov.github.io/blog/2014/03/09/json-and-scala-play-json-library) | [Play Json](http://www.playframework.com/documentation/2.2.x/ScalaJson)           | Библиотека для работы с json выделенная из популярного web framework'а - Play
            | [Spray Json](https://github.com/spray/spray-json)          | Библиотека выделенная из проекта spray (инструментарий для организации REST/HTTP слоя поверх akka).
            | [Argonaut](http://argonaut.io)            | Библиотека использующая в своей основе только функциональную парадигму, то есть pure functional by design, активно использует ScalaZ.
+
+>**Обновление**
+>К сожалению, нет времени закончить эту серию и написать все запланированные посты. Тем не менее, все запланированные библиотеки были рассмотрены в коде, который можно посмотреть на github - https://github.com/algolov/JsonSeries.git
 
 
 В конце серии планируется заключительный пост со сравнением всех библиотек. В качестве сквозного примера будет использоваться список ссылок с сайта [reddit.com в json](http://www.reddit.com/r/scala/.json), конкретно [Scala subreddit](http://www.reddit.com/r/scala). В данном посте я опишу каркас, который будет использоваться при описании каждой из библиотек.
