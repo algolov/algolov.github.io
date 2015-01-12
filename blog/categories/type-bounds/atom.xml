@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Polymorphism | Александр Головко]]></title>
-  <link href="http://algolov.github.io/blog/categories/polymorphism/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Type Bounds | Александр Головко]]></title>
+  <link href="http://algolov.github.io/blog/categories/type-bounds/atom.xml" rel="self"/>
   <link href="http://algolov.github.io/"/>
   <updated>2015-01-13T01:53:23+10:00</updated>
   <id>http://algolov.github.io/</id>
