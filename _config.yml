@@ -97,5 +97,8 @@ disqus_show_comment_count: false
 # Google Analytics
 google_analytics_tracking_id: UA-56791437-1
 
+# Yandex Metrica
+yandex_metrica_tracking_id: 27971712
+
 # Facebook Like
 facebook_like: true
